@@ -16,6 +16,8 @@
     "aging": "tsx scripts/aging.ts"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "jose": "^6.2.3",
     "next": "15.3.0",

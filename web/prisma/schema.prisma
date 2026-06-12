@@ -1,11 +1,9 @@
-// 인곽 민원 창구 — Prisma 스키마 (개발: SQLite)
-// 운영 전 PostgreSQL 전환: datasource provider 를 "postgresql" 로 바꾸고
-// role/status 값에 CHECK 제약을 추가한다(설계서 §3).
-//
-// SQLite 는 enum 을 지원하지 않으므로 role/status 는 String + 앱 레벨 검증으로 처리한다.
+// 인곽 민원 창구 — Prisma 스키마 (PostgreSQL)
+// Cloudflare Pages Functions(edge runtime) 에서 동작하려면 PostgreSQL + serverless driver adapter가 필요합니다.
+// SQLite는 edge runtime에서 지속적으로 접근할 수 없으므로 개발/운영 모두 PostgreSQL을 사용합니다.
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

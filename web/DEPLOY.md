@@ -45,45 +45,40 @@
 
 ---
 
-## 3. 데이터베이스 마이그레이션 (SQLite → PostgreSQL)
+## 3. 데이터베이스 설정 (PostgreSQL)
 
-### 3.1 Prisma 설정 변경
+Cloudflare Pages Functions(edge runtime)에서는 SQLite 파일에 접근할 수 없습니다. 개발/운영 모두 PostgreSQL이 필요하며, edge runtime에서는 `@neondatabase/serverless` 드라이버 어댑터를 사용합니다.
 
-`prisma/schema.prisma`의 datasource provider를 변경합니다.
+### 3.1 권장: Neon PostgreSQL
 
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-```
-
-### 3.2 연결 풀링
-
-Cloudflare Pages/Workers는 짧은 생명주기의 Function을 사용하므로, 직접적인 PostgreSQL 연결을 많이 열 수 없습니다. 다음 중 하나를 적용하세요.
-
-- **Supabase**: Connection String 끝에 `?pgbouncer=true` 추가
-- **Neon**: `?pgbouncer=true` 또는 `@neondatabase/serverless` 드라이버 어댑터 사용
-- **Prisma Accelerate**: `prisma://` 연결 문자열 사용
-
-예시 DATABASE_URL:
+1. [Neon](https://neon.tech)에서 물리 프로젝트를 생성합니다.
+2. `psql` 또는 Neon 대시보드에서 데이터베이스를 만듭니다(예: `ishs_minwon`).
+3. **Connection String**을 복사합니다.
 
 ```env
-DATABASE_URL="postgresql://user:pass@host:5432/db?pgbouncer=true"
+DATABASE_URL="postgresql://user:password@host.neon.tech/ishs_minwon?sslmode=require"
+```
+
+### 3.2 로컬 개발용 PostgreSQL
+
+Docker Compose로 로컬 PostgreSQL을 실행할 수 있습니다.
+
+```bash
+cd web
+docker compose up -d
+# DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ishs_minwon
 ```
 
 ### 3.3 마이그레이션 실행
 
 ```bash
 cd web
-# PostgreSQL로 전환 후 첫 마이그레이션 생성
-npx prisma migrate dev --name init_postgres
+# 첫 마이그레이션 생성
+npx prisma migrate dev --name init
 
-# 이후 배포 시
+# 이후 운영 DB에 적용
 npm run db:migrate
 ```
-
-> `npm run db:push`는 개발용 SQLite에만 사용하는 것을 권장합니다.
 
 ---
 
@@ -93,7 +88,7 @@ npm run db:migrate
 
 | 변수명 | 설명 | 예시 |
 |--------|------|------|
-| `DATABASE_URL` | PostgreSQL 연결 문자열 | `postgresql://...?pgbouncer=true` |
+| `DATABASE_URL` | PostgreSQL 연결 문자열 | `postgresql://user:pass@host.neon.tech/db?sslmode=require` |
 | `SESSION_SECRET` | JWT 서명용 비밀키 | `openssl rand -base64 32` |
 | `RIRO_AUTH_URL` | riro-auth 서비스 공개 URL | `https://riro-auth.example.com` |
 | `ALLOW_DEV_LOGIN` | 운영에서는 반드시 `false` | `false` |
