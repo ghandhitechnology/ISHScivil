@@ -10,8 +10,8 @@
 [사용자]
    │
    ▼
-[Cloudflare Pages]  Next.js 16 App Router (이 저장소 web/)
-   │                 ├─ Pages Functions (API Routes)
+[Cloudflare Pages]  Next.js 15.3.0 App Router (이 저장소 web/)
+   │                 ├─ Pages Functions (API Routes, `runtime = 'edge'`)
    │                 └─ Static Assets
    │
    ├─ POST /api/auth/login  ────────┐
@@ -120,9 +120,20 @@ Cloudflare Pages 대시보드의 Build settings:
 
 ### 5.2 Node.js 버전
 
-- **Node Version**: `20` 이상 권장
+- **Node Version**: `20` (`.nvmrc` 참고)
+- Cloudflare Pages의 "Build system version"을 `2`로 설정하면 Node 20이 사용됩니다.
 
-### 5.3 wrangler.toml
+### 5.3 `runtime = 'edge'`
+
+Cloudflare Pages Functions를 사용하려는 모든 API 라우트와 동적 페이지 상단에 반드시 아래 구문이 있어야 합니다.
+
+```ts
+export const runtime = 'edge';
+```
+
+이 설정이 없으면 `next-on-pages`가 라우트를 Pages Function으로 생성하지 않아 404가 반환될 수 있습니다. 이미 모든 API 라우트와 `/admin/dashboard`, `/archived`, `/complaint/[id]`, `/mypage`에 적용되어 있습니다.
+
+### 5.4 wrangler.toml
 
 `wrangler.toml`이 이미 포함되어 있습니다. 필요에 따라 `compatibility_date`를 최신으로 업데이트하세요.
 
@@ -181,6 +192,8 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 | 항목 | 현재 상태 | 권장 개선 |
 |------|----------|----------|
+| Next.js 버전 | `15.3.0` (Cloudflare Pages 호환) | `@cloudflare/next-on-pages`가 Next.js 16을 지원하면 업그레이드 |
+| Edge Runtime | 모든 API/동적 페이지에 적용 | Pages Functions로 정상 동작 |
 | DB | SQLite (개발) | PostgreSQL + pooling |
 | 인증 서비스 | 별도 FastAPI | VPS/컨테이너 배포 |
 | 이미지 최적화 | `next/image unoptimized` | Cloudflare Images 또는 그대로 유지 |
@@ -190,7 +203,22 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ---
 
-## 10. 배포 명령어 요약
+## 10. Troubleshooting
+
+### Pages Functions가 404를 반환하는 경우
+
+1. 해당 파일 상단에 `export const runtime = 'edge';`가 있는지 확인합니다.
+2. `npm run pages:build` 로컬에서 성공하는지 확인합니다.
+3. Cloudflare Pages 빌드 설정에서 **Build command**가 `npm run pages:build`이고 **Build output directory**가 `.vercel/output/static`인지 확인합니다.
+4. Cloudflare Pages 대시보드 → Settings → Functions → **Compatibility flags**에 `nodejs_compat`가 포함되어 있는지 확인합니다.
+
+### 메인 페이지는 뜨지만 API 호출이 실패하는 경우
+
+Cloudflare Pages Functions는 로컬 SQLite 파일에 접근할 수 없습니다. `DATABASE_URL`을 PostgreSQL 연결 문자열로 변경하고 Prisma driver adapter를 설정해야 합니다(3장 참고).
+
+---
+
+## 11. 배포 명령어 요약
 
 ```bash
 # 1. 의존성 설치 및 Prisma 클라이언트 생성
