@@ -2,13 +2,9 @@ name = "ishs-minwon"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Pages Functions에서 사용할 환경변수는 Cloudflare Pages 대시보드에서 설정합니다.
-# 예시:
-# DATABASE_URL="postgresql://user:pass@host:5432/db?pgbouncer=true"
-# SESSION_SECRET="<openssl rand -base64 32>"
-# RIRO_AUTH_URL="https://riro-auth.example.com"
-# ALLOW_DEV_LOGIN="false"
-# NODE_ENV="production"
+# 주의: 민감한 값(DATABASE_URL, SESSION_SECRET 등)은 아래 [vars]가 아닌
+# Cloudflare Pages Dashboard → Settings → Environment variables 에서 설정하세요.
+# wrangler.toml의 [vars]는 소스코드에 노출되므로 공개필 수 있는 값만 사용합니다.
 
 [vars]
 NODE_ENV = "production"
