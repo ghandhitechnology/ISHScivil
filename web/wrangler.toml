@@ -1,5 +1,6 @@
-name = "ishs-minwon"
-compatibility_date = "2025-01-01"
+name = "ishscivil"
+pages_build_output_dir = ".vercel/output/static"
+compatibility_date = "2025-06-12"
 compatibility_flags = ["nodejs_compat"]
 
 # 주의: 민감한 값(DATABASE_URL, SESSION_SECRET 등)은 아래 [vars]가 아닌
