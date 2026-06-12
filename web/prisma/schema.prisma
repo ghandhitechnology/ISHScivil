@@ -1,0 +1,82 @@
+// 인곽 민원 창구 — Prisma 스키마 (개발: SQLite)
+// 운영 전 PostgreSQL 전환: datasource provider 를 "postgresql" 로 바꾸고
+// role/status 값에 CHECK 제약을 추가한다(설계서 §3).
+//
+// SQLite 는 enum 을 지원하지 않으므로 role/status 는 String + 앱 레벨 검증으로 처리한다.
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// 사용자 — 리로 인증 결과만 저장. ID/PW 는 절대 저장하지 않는다.
+model User {
+  id            String   @id @default(uuid())
+  riroId        String   @unique // 리로스쿨 로그인 식별값(= 로그인 아이디, 비밀번호 아님)
+  role          String   @default("STUDENT") // STUDENT | TEACHER | ADMIN
+  name          String // 실명 — 세션/권한 판정용. API 응답에는 절대 미포함(설계서 §6)
+  studentNumber String // 학번 — API 응답 미포함
+  generation    Int      @default(0) // 기수
+  suspended     Boolean  @default(false) // 관리자에 의한 이용 정지
+  createdAt     DateTime @default(now())
+
+  complaints Complaint[]
+  votes      Vote[]
+  comments   Comment[]
+}
+
+/// 민원
+model Complaint {
+  id         String   @id @default(uuid())
+  title      String // 요약 제목 (<=100)
+  summary1   String // 세줄요약 1
+  summary2   String // 세줄요약 2
+  summary3   String // 세줄요약 3
+  content    String // 구체 상세 내용
+  status     String   @default("ACTIVE") // ACTIVE | ARCHIVED | DELETED
+  voteCount  Int      @default(0) // 캐싱용 실시간 투표합
+  inTop3Days Int      @default(0) // 인기 상위(Top3)에 머문 일수 카운터
+  createdAt  DateTime @default(now())
+
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String // FK — API 응답에는 절대 미포함(익명성)
+
+  votes    Vote[]
+  comments Comment[]
+
+  @@index([status, voteCount])
+  @@index([status, createdAt])
+}
+
+/// 투표 기록 — (user, complaint) 복합 유니크로 중복 투표 원천 차단
+model Vote {
+  id          Int      @id @default(autoincrement())
+  votedDate   DateTime @default(now()) // 하루 한도 검증용 (날짜 부분만 비교)
+
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  complaintId String
+
+  @@unique([userId, complaintId])
+  @@index([userId, votedDate])
+}
+
+/// 토론 댓글
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  hidden    Boolean  @default(false) // 관리자에 의한 숨김 처리
+  createdAt DateTime @default(now())
+
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  complaintId String
+  author      User      @relation(fields: [authorId], references: [id])
+  authorId    String // FK — 응답에는 role(교사 여부)만 노출
+
+  @@index([complaintId, createdAt])
+}

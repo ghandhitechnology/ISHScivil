@@ -1,0 +1,15 @@
+name = "ishs-minwon"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages Functions에서 사용할 환경변수는 Cloudflare Pages 대시보드에서 설정합니다.
+# 예시:
+# DATABASE_URL="postgresql://user:pass@host:5432/db?pgbouncer=true"
+# SESSION_SECRET="<openssl rand -base64 32>"
+# RIRO_AUTH_URL="https://riro-auth.example.com"
+# ALLOW_DEV_LOGIN="false"
+# NODE_ENV="production"
+
+[vars]
+NODE_ENV = "production"
+ALLOW_DEV_LOGIN = "false"
